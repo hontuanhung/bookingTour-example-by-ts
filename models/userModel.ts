@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Schema, model } from "mongoose";
 
-import validator from "validator";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 interface IUser {
@@ -21,16 +21,12 @@ interface IUser {
 const userSchema = new Schema<IUser>({
   name: {
     type: String,
-    require: [true, "Please tell us your name"],
     trim: true,
   },
   email: {
     type: String,
-    require: [true, "Please provide us your email"],
     trim: true,
     lowercase: true,
-    validate: [validator.isEmail, "Invalid email"],
-    // unique: true,
   },
   photo: {
     type: String,
@@ -38,13 +34,10 @@ const userSchema = new Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ["user", "guide", "lead-guide", "admin"],
     default: "user",
   },
   password: {
     type: String,
-    require: [true, "Please provide a password"],
-    minlength: 8,
     select: false,
   },
   userJWTs: { type: [String], select: false },
@@ -65,6 +58,13 @@ userSchema.pre("save", async function (next) {
 
   next();
 });
+
+userSchema.methods.correctPassword = function (
+  candidatePassword: string,
+  userPassword: string
+) {
+  return bcrypt.compare(candidatePassword, userPassword);
+};
 
 const User = model("User", userSchema);
 

@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 
 import jwt from "jsonwebtoken";
-import cron, { schedule } from "node-cron";
+import cron from "node-cron";
 
-import { User, IUser } from "../models/userModel";
+import { User } from "../models/userModel";
 import { catchAsync } from "../utils/catchAsync";
 import AppError from "../utils/appError";
 import validator from "../utils/validator";
@@ -12,6 +12,12 @@ function signToken(id: string): string {
   return jwt.sign({ id: id }, "1d", {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
+}
+
+interface CookieOptions {
+  expires: Date;
+  httpOnly: boolean;
+  secure?: boolean;
 }
 
 const removeExpredJWT = cron.schedule(
@@ -51,24 +57,17 @@ export const signup = catchAsync(
       role: { type: "string", enum: ["user", "guide", "lead-guide", "admin"] },
     });
 
-    const newUser = await User.create({
+    const newUser: any = await User.create({
       name: req.body.name,
       email: req.body.email,
       password: req.body.password,
       photo: req.body.photo,
       role: req.body.role,
     });
-    console.log(newUser);
 
     const token: string = signToken(newUser._id);
     newUser.userJWTs.push(token);
     await newUser.save();
-
-    interface CookieOptions {
-      expires: Date;
-      httpOnly: boolean;
-      secure?: boolean;
-    }
 
     const cookieOptions: CookieOptions = {
       expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
@@ -89,3 +88,43 @@ export const signup = catchAsync(
     });
   }
 );
+
+export const login = catchAsync(async (req, res, next) => {
+  validator(req.body, {
+    email: { required: true, type: "string", isEmail: true },
+    password: {
+      required: true,
+      type: "string",
+      minlength: [8, "Your password must be at least 8 characters long."],
+    },
+  });
+
+  const { email, password } = req.body;
+
+  const user: any = await User.findOne({ email: email }).select(
+    "+password +userJWTs"
+  );
+  console.log(user);
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError("Incorrect email or password", 401));
+  }
+
+  const token: string = signToken(user._id);
+  user.userJWTs.push(token);
+  await user.save();
+  console.log(process.env.JWT_COOKIE_EXPIRES_IN);
+  const cookieOptions: CookieOptions = {
+    expires: new Date(
+      Date.now() +
+        (process.env.JWT_COOKIE_EXPIRES_IN || 1) * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
+  res.cookie("jwt", token, cookieOptions);
+
+  res.status(200).json({
+    status: "success",
+  });
+});
