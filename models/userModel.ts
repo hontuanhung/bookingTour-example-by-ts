@@ -60,7 +60,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.pre(/^find/, async function (next) {
+userSchema.pre(/^find/, async function (next: any): Promise<void> {
   this.find({ active: { $ne: false } });
   next();
 });
@@ -83,6 +83,15 @@ userSchema.methods.createEmailToken = function (): string {
   this.emailTokenExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
+};
+
+userSchema.methods.changedPasswordAfter = function (
+  tokenExpires: number
+): boolean {
+  if (Number(this.passwordChangedAt) > tokenExpires) {
+    return true;
+  }
+  return false;
 };
 
 const User = model<IUser>("User", userSchema);
