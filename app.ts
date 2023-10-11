@@ -10,7 +10,8 @@ import { globalErrorHandler } from "./controllers/errorController";
 const app: Express = express();
 
 // const touer: Router = Router();
-console.log(process.env.NODE_ENV);
+console.log(`===Enviroment: ${process.env.NODE_ENV}===`);
+
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }

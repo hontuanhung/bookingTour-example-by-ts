@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
 
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
-interface IUser {
+interface IUser extends Model<any> {
   name: string;
   email: string;
   password: string;
@@ -13,8 +14,8 @@ interface IUser {
   role: string;
   userJWTs: string[];
   passwordChangedAt: Date;
-  passwordResetToken: string;
-  passwordResetExpires: Date;
+  emailToken: string;
+  emailTokenExpires: number;
   active: boolean;
 }
 
@@ -42,11 +43,11 @@ const userSchema = new Schema<IUser>({
   },
   userJWTs: { type: [String], select: false },
   passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
+  emailToken: String,
+  emailTokenExpires: Date,
   active: {
     type: Boolean,
-    default: true,
+    default: false,
     select: false,
   },
 });
@@ -59,13 +60,31 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+userSchema.pre(/^find/, async function (next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
+
 userSchema.methods.correctPassword = function (
   candidatePassword: string,
   userPassword: string
-) {
+): Promise<boolean> {
   return bcrypt.compare(candidatePassword, userPassword);
 };
 
-const User = model("User", userSchema);
+userSchema.methods.createEmailToken = function (): string {
+  const resetToken: string = crypto.randomBytes(32).toString("hex");
+
+  this.emailToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.emailTokenExpires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
+};
+
+const User = model<IUser>("User", userSchema);
 
 export { User, IUser };

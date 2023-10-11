@@ -1,12 +1,11 @@
 import { connect } from "mongoose";
-import * as dotenv from "dotenv";
 import config from "./config";
+// import dotenv from "dotenv";
+// dotenv.config({ path: "./.env" });
 
-dotenv.config({ path: "./.env" });
-console.log(process.env.LOCAL_DATABASE);
 import { app } from "./app";
 
-const DB: string = `${process.env.LOCAL_DATABASE}`;
+const DB: string = config.LOCAL_DATABASE;
 
 run().catch((err) => console.log(err));
 
@@ -28,8 +27,6 @@ async function run() {
 
 // console.log(process.env.PORT);
 
-let port: any = process.env.PORT || 3000;
-
-app.listen(port, () => {
-  console.log(`App running on port ${port}...`);
+app.listen(config.PORT, () => {
+  console.log(`App running on port ${config.PORT}...`);
 });
