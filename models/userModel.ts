@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { Model, Schema, model } from "mongoose";
+import { DocumentQuery, Model, Query, Schema, model } from "mongoose";
 
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -16,6 +16,7 @@ interface IUser extends Model<any> {
   passwordChangedAt: Date;
   emailToken: string;
   emailTokenExpires: number;
+  inactiveAccount: boolean;
   active: boolean;
 }
 
@@ -45,6 +46,11 @@ const userSchema = new Schema<IUser>({
   passwordChangedAt: Date,
   emailToken: String,
   emailTokenExpires: Date,
+  inactiveAccount: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
   active: {
     type: Boolean,
     default: false,
@@ -53,7 +59,9 @@ const userSchema = new Schema<IUser>({
 });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password")) {
+    return next();
+  }
 
   this.password = await bcrypt.hash(this.password, 12);
 
@@ -74,7 +82,6 @@ userSchema.methods.correctPassword = function (
 
 userSchema.methods.createEmailToken = function (): string {
   const resetToken: string = crypto.randomBytes(32).toString("hex");
-
   this.emailToken = crypto
     .createHash("sha256")
     .update(resetToken)

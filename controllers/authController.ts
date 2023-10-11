@@ -3,7 +3,6 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import cron from "node-cron";
 
-import { User } from "../models/userModel";
 import signupFeat from "./authFeatures/signup";
 import loginFeat from "./authFeatures/login";
 import verifyFeat from "./authFeatures/verify";
@@ -12,6 +11,7 @@ import protectFeat from "./authFeatures/protect";
 import resetPasswordFeat from "./authFeatures/resetPassword";
 import updatePasswordFeat from "./authFeatures/updatePassword";
 
+import { User } from "../models/userModel";
 import catchAsync from "../utils/catchAsync";
 import AppError from "../utils/appError";
 
@@ -32,7 +32,6 @@ const removeExpredJWT = cron.schedule(
         }
       }
       await el.save();
-      // console.log(el);
     }
   },
   {
@@ -41,15 +40,7 @@ const removeExpredJWT = cron.schedule(
 );
 removeExpredJWT.start();
 
-export const signup = catchAsync(signupFeat);
-export const login = catchAsync(loginFeat);
-export const verifyEmail = catchAsync(verifyFeat);
-export const forgotPassword = catchAsync(forgotPasswordFeat);
-export const resetPassword = catchAsync(resetPasswordFeat);
-export const protect = catchAsync(protectFeat);
-export const updatePassword = catchAsync(updatePasswordFeat);
-
-exports.restrictTo = (...roles: string[]) => {
+export const restrictTo = (...roles: string[]) => {
   return (req: CustomRequest, res: Response, next: NextFunction) => {
     // roles['admin', 'lead-guide']
     if (roles.includes(req.user.role)) {
@@ -60,6 +51,14 @@ exports.restrictTo = (...roles: string[]) => {
     );
   };
 };
+
+export const signup = catchAsync(signupFeat);
+export const login = catchAsync(loginFeat);
+export const verifyEmail = catchAsync(verifyFeat);
+export const forgotPassword = catchAsync(forgotPasswordFeat);
+export const resetPassword = catchAsync(resetPasswordFeat);
+export const protect = catchAsync(protectFeat);
+export const updatePassword = catchAsync(updatePasswordFeat);
 
 export const testFunction = (
   req: Request,

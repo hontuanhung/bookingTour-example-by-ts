@@ -24,7 +24,6 @@ export = async (req: Request, res: Response, next: NextFunction) => {
     photo: req.body.photo,
     role: req.body.role,
   });
-  console.log(newUser);
 
   const token = newUser.createEmailToken();
   newUser.save();
