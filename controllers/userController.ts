@@ -25,7 +25,8 @@ const filterObj = (obj: any, ...allowedFields: string[]): any => {
 
 const multerStorage = multer.memoryStorage();
 
-const multerFilter = (req: Request, file: Express.Multer.File, cb: any) => {
+// const multerFilter = (req: Request, file: Express.Multer.File, cb: any) => {
+const multerFilter = (req: Request, file: any, cb: any) => {
   if (file.mimetype.startsWith("image")) {
     cb(null, true);
   } else {

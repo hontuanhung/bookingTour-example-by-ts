@@ -1,11 +1,11 @@
-import express, { Express } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 
 import morgan from "morgan";
-import multer from "multer";
+import cookieParser from "cookie-parser";
 
 import { tourRouter } from "./routes/tourRoutes";
 import { userRouter } from "./routes/userRoutes";
-import { globalErrorHandler } from "./controllers/errorController";
+import globalErrorHandler from "./controllers/errorController";
 
 const app: Express = express();
 
@@ -17,8 +17,19 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(express.json({ limit: "15kb" }));
+app.use(cookieParser());
 
-app.use(multer().array(""));
+// app.use(multer().array(""));
+app.use(express.static(`${__dirname}/public`));
+
+interface CustomRequest extends Request {
+  requestTime?: any;
+}
+
+app.use((req: CustomRequest, res: Response, next: NextFunction) => {
+  req.requestTime = new Date().toISOString();
+  next();
+});
 
 app.use("/api/v1/tours", tourRouter);
 app.use("/api/v1/users", userRouter);

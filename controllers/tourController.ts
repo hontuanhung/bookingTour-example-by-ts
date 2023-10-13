@@ -1,6 +1,8 @@
-import { signup } from "./authController";
 import { Request, Response, NextFunction } from "express";
-import { Tour } from "../models/tourModel";
+
+import multer from "multer";
+import sharp from "sharp";
+
 import {
   createOne,
   deleteOne,
@@ -8,25 +10,14 @@ import {
   getOne,
   updateOne,
 } from "./handlerFactory";
-import multer from "multer";
+import { Tour } from "../models/tourModel";
 import AppError from "../utils/appError";
 import catchAsync from "../utils/catchAsync";
-import sharp from "sharp";
+import validator from "../utils/validator";
 
-interface CustomRequest extends Request {
-  file: {
-    fieldname: string;
-    originalname: string;
-    encoding: string;
-    mimetype: string;
-    buffer: Buffer;
-    size: number;
-    filename: string;
-  };
-  files: {
-    [fieldname: string]: Express.Multer.File[];
-  };
-}
+import getTourStatsFeat from "./tourFeatues/getTourStats";
+import getMonthlyPlanFeat from "./tourFeatues/getMonthlyPlan";
+import getToursWithinFeat from "./tourFeatues/getToursWithin";
 
 const multerStorage = multer.memoryStorage();
 
@@ -48,37 +39,127 @@ export const uploadTourImgs = upload.fields([
   { name: "images", maxCount: 3 },
 ]);
 
-export const resizeTourImages = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.files);
-    // if (!req.files || !req.files.imageCover || !req.files.images) return next();
-    // req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
-    // await sharp(req.files.imageCover[0].buffer)
-    //   .resize(2000, 1333)
-    //   .toFormat("jpeg")
-    //   .jpeg({ quality: 90 })
-    //   .toFile(`public/img/tours/${req.body.imageCover}`);
+interface CustomRequest extends Request {
+  user?: any;
+}
 
-    // req.body.images = [];
-    // await Promise.all(
-    //   req.files.images.map(async (file, i) => {
-    //     const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
-    //     await sharp(file.buffer)
-    //       .resize(2000, 1333)
-    //       .toFormat("jpeg")
-    //       .jpeg({ quality: 90 })
-    //       .toFile(`public/img/tours/${filename}`);
-    //     req.body.images.push(filename);
-    //   })
-    // );
-
-    // console.log(req.body);
-    next();
+export const resizeTourImages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  let files = req.files as { [fieldname: string]: Express.Multer.File[] } | any;
+  if (!files) {
+    return next();
   }
-);
+  if (files.imageCover) {
+    req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+    await sharp(files.imageCover[0].buffer)
+      .resize(2000, 1333)
+      .toFormat("jpeg")
+      .jpeg({ quality: 90 })
+      .toFile(`public/img/tours/image-Cover/${req.body.imageCover}`);
+  }
 
-exports.getAllTours = getAll(Tour);
-exports.getTour = getOne(Tour, { path: "reviews" });
-exports.createTour = createOne(Tour);
-exports.updateTour = updateOne(Tour);
-exports.deleteTour = deleteOne(Tour);
+  if (files.images) {
+    req.body.images = [];
+    await Promise.all(
+      files.images.map(async (file: Express.Multer.File, i: number) => {
+        const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+        await sharp(file.buffer)
+          .resize(2000, 1333)
+          .toFormat("jpeg")
+          .jpeg({ quality: 90 })
+          .toFile(`public/img/tours/images/${filename}`);
+        req.body.images.push(filename);
+      })
+    );
+  }
+
+  console.log(req.body);
+  next();
+};
+
+export const validateBeforeCreateTour = catchAsync(async (req, res, next) => {
+  req.files;
+  req.body = validator(req.body, {
+    name: {
+      required: true,
+      type: "string",
+      maxlength: [40, "A tour name must have less or equal then 40 characters"],
+      minlength: [10, "A tour name must have more or equal then 10 characters"],
+    },
+    duration: { required: true, type: "number" },
+    maxGroupSize: {
+      required: true,
+      type: "number",
+    },
+    difficulty: {
+      required: true,
+      type: "string",
+      enum: ["easy", "medium", "difficult"],
+    },
+    price: { required: true, type: "number" },
+    priceDiscount: { type: "number" },
+    summary: { type: "string" },
+    description: { required: true, type: "string" },
+    imageCover: { require: true, type: "string" },
+    images: { type: ["string"] },
+    startDates: { required: true, type: ["string"] },
+    secretTour: {
+      type: "boolean",
+    },
+    startLocation: {
+      type: "string",
+    },
+    locations: {
+      type: "string",
+    },
+  });
+  next();
+});
+
+export const validateBeforeUpdateTour = catchAsync(async (req, res, next) => {
+  validator(req.body, {
+    name: {
+      type: "string",
+      maxlength: [40, "A tour name must have less or equal then 40 characters"],
+      minlength: [10, "A tour name must have more or euqal then 10 characters"],
+    },
+    duration: { type: "number" },
+    maxGroupSize: {
+      type: "number",
+    },
+    difficulty: {
+      type: "string",
+      enum: ["easy", "medium", "difficult"],
+    },
+    price: { type: "number" },
+    priceDiscount: { type: "number" },
+    summary: { type: "string" },
+    description: { type: "string" },
+    imageCover: { type: "string" },
+    images: { type: ["string"] },
+    startDates: {},
+    secretTour: {
+      type: "boolean",
+    },
+    startLocation: {
+      type: "string",
+    },
+    locations: {
+      type: "string",
+    },
+  });
+  next();
+});
+
+export const getAllTours = getAll(Tour);
+export const getTour = getOne(Tour, { path: "reviews" });
+export const createTour = createOne(Tour);
+export const updateTour = updateOne(Tour);
+export const deleteTour = deleteOne(Tour);
+
+export const getTourStats = catchAsync(getTourStatsFeat);
+export const getMonthlyPlan = catchAsync(getMonthlyPlanFeat);
+export const getToursWithin = catchAsync(getToursWithinFeat);

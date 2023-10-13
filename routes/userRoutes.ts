@@ -3,9 +3,9 @@ import { Router } from "express";
 import {
   login,
   signup,
-  verifyEmail,
   forgotPassword,
   resetPassword,
+  verifyEmail,
   protect,
   testFunction,
 } from "../controllers/authController";

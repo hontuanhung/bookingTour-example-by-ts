@@ -2,6 +2,10 @@ class AppError extends Error {
   statusCode: number;
   status: string;
   isOperational: boolean;
+  path: any;
+  value: any;
+  errmsg: any;
+  errors!: { [s: string]: unknown } | ArrayLike<unknown>;
 
   constructor(message: string, statusCode: number) {
     super(message); //super() gọi đến parent constructor

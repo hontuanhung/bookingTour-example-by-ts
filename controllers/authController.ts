@@ -4,12 +4,12 @@ import jwt from "jsonwebtoken";
 import cron from "node-cron";
 
 import signupFeat from "./authFeatures/signup";
-import loginFeat from "./authFeatures/login";
-import verifyFeat from "./authFeatures/verify";
 import forgotPasswordFeat from "./authFeatures/forgotPassword";
+import loginFeat from "./authFeatures/login";
 import protectFeat from "./authFeatures/protect";
 import resetPasswordFeat from "./authFeatures/resetPassword";
 import updatePasswordFeat from "./authFeatures/updatePassword";
+import verifyEmailFeat from "./authFeatures/verifyEmail";
 
 import { User } from "../models/userModel";
 import catchAsync from "../utils/catchAsync";
@@ -54,7 +54,7 @@ export const restrictTo = (...roles: string[]) => {
 
 export const signup = catchAsync(signupFeat);
 export const login = catchAsync(loginFeat);
-export const verifyEmail = catchAsync(verifyFeat);
+export const verifyEmail = catchAsync(verifyEmailFeat);
 export const forgotPassword = catchAsync(forgotPasswordFeat);
 export const resetPassword = catchAsync(resetPasswordFeat);
 export const protect = catchAsync(protectFeat);

@@ -13,6 +13,9 @@ const validateFieldRule = (value: any, fieldRules: any, field: string) => {
   for (const rule of Object.keys(fieldRules)) {
     switch (rule) {
       case "type":
+        if (fieldRules.type === "number") {
+          value = Number(value);
+        }
         if (!ValidateFeatures.isValidType(value, fieldRules.type)) {
           throw new AppError(`Invalid typeof ${field} value`, 400);
         }
@@ -68,9 +71,11 @@ const validateFieldRule = (value: any, fieldRules: any, field: string) => {
   ) {
     throw new AppError("Passwords do not match", 400);
   }
+  return value;
 };
 
 export = (input: any, rules: any) => {
+  const convertedBody: any = {};
   if (input.password) {
     password = input.password;
   }
@@ -78,6 +83,8 @@ export = (input: any, rules: any) => {
     const fieldRules: any = rules[field];
     const fieldValue: any = input[field];
 
-    validateFieldRule(fieldValue, fieldRules, field);
+    const value = validateFieldRule(fieldValue, fieldRules, field);
+    convertedBody[field] = value;
   }
+  return convertedBody;
 };

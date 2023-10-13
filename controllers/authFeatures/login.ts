@@ -8,8 +8,8 @@ import jwt from "jsonwebtoken";
 import config from "../../config";
 
 function signToken(id: string): string {
-  return jwt.sign({ id: id }, "1d", {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+  return jwt.sign({ id: id }, config.JWT_SECRET, {
+    expiresIn: config.JWT_EXPIRES_IN,
   });
 }
 

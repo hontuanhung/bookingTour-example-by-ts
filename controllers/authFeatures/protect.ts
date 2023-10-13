@@ -19,14 +19,14 @@ export = async (req: CustomRequest, res: Response, next: NextFunction) => {
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
-  if (!token) {
+  if (!token || token === "null") {
     return next(
       new AppError("You are not logged in! Please log in to get accesss.", 401)
     );
   }
 
   // 2) Verification token
-  const decoded: any = await jwt.verify(token, config.JWT_SECRET);
+  const decoded: any = jwt.verify(token, config.JWT_SECRET);
 
   // 3) Check if user still exists
   const currentUser: any = await User.findById(decoded.id).select("+userJWTs");

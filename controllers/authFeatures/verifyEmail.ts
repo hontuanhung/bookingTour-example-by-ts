@@ -1,4 +1,4 @@
-import { resetPassword } from "./../authController";
+import { resetPassword } from "../authController";
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { User } from "../../models/userModel";
