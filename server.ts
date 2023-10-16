@@ -1,13 +1,19 @@
 import { connect } from "mongoose";
-import config from "./config";
-// import dotenv from "dotenv";
-// dotenv.config({ path: "./.env" });
 
-import { app } from "./app";
+process.on("uncaughtException", (err: Error) => {
+  console.log("UNCAUGHT EXCEPTION! Shutting down...");
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
+import config from "./config";
+import app from "./app";
+import { Server } from "http";
+import { error } from "console";
 
 const DB: string = config.LOCAL_DATABASE;
 
-run().catch((err) => console.log(err));
+run().catch((error) => console.log(error));
 
 async function run() {
   connect(DB, {
@@ -17,7 +23,6 @@ async function run() {
     useUnifiedTopology: true,
   })
     .then((con: any) => {
-      // console.log(con.connect);
       console.log("DB connection successful!");
     })
     .catch((err: any) => {
@@ -25,8 +30,16 @@ async function run() {
     });
 }
 
-// console.log(process.env.PORT);
+const port: number = config.PORT || 3000;
+const server: Server = app.listen(port, () => {
+  console.log(`App running on port ${port}...`);
+});
 
-app.listen(config.PORT, () => {
-  console.log(`App running on port ${config.PORT}...`);
+process.on("unhandledRejection", (err: Error) => {
+  console.log("UNHANDLER REJECTIONN! Shutting down...");
+  console.log(err.name, err.message);
+  server.close(() => {
+    //.close() finish all request are still pending or being handled
+    process.exit(1);
+  });
 });

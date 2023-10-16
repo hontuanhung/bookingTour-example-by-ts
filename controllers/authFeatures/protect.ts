@@ -40,7 +40,6 @@ export = async (req: CustomRequest, res: Response, next: NextFunction) => {
     );
   }
 
-  // DTO
   if (!currentUser.userJWTs.includes(token)) {
     return next(new AppError("Token does not match", 401));
   }

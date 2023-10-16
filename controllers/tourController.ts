@@ -18,10 +18,15 @@ import validator from "../utils/validator";
 import getTourStatsFeat from "./tourFeatues/getTourStats";
 import getMonthlyPlanFeat from "./tourFeatues/getMonthlyPlan";
 import getToursWithinFeat from "./tourFeatues/getToursWithin";
+import getDistancesFeat from "./tourFeatues/getDistances";
 
 const multerStorage = multer.memoryStorage();
 
-const muterFilter = (req: Request, file: Express.Multer.File, cb: any) => {
+const muterFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: any
+): void => {
   if (file.mimetype.startsWith("image")) {
     cb(null, true);
   } else {
@@ -29,19 +34,19 @@ const muterFilter = (req: Request, file: Express.Multer.File, cb: any) => {
   }
 };
 
-const upload = multer({
+const upload: multer.Multer = multer({
   storage: multerStorage,
   fileFilter: muterFilter,
 });
 
-export const uploadTourImgs = upload.fields([
+export const uploadTourImgs: any = upload.fields([
   { name: "imageCover", maxCount: 1 },
   { name: "images", maxCount: 3 },
 ]);
 
-interface CustomRequest extends Request {
-  user?: any;
-}
+// interface CustomRequest extends Request {
+//   user?: any;
+// }
 
 export const resizeTourImages = async (
   req: Request,
@@ -80,44 +85,59 @@ export const resizeTourImages = async (
   next();
 };
 
-export const validateBeforeCreateTour = catchAsync(async (req, res, next) => {
-  req.files;
-  req.body = validator(req.body, {
-    name: {
-      required: true,
-      type: "string",
-      maxlength: [40, "A tour name must have less or equal then 40 characters"],
-      minlength: [10, "A tour name must have more or equal then 10 characters"],
-    },
-    duration: { required: true, type: "number" },
-    maxGroupSize: {
-      required: true,
-      type: "number",
-    },
-    difficulty: {
-      required: true,
-      type: "string",
-      enum: ["easy", "medium", "difficult"],
-    },
-    price: { required: true, type: "number" },
-    priceDiscount: { type: "number" },
-    summary: { type: "string" },
-    description: { required: true, type: "string" },
-    imageCover: { require: true, type: "string" },
-    images: { type: ["string"] },
-    startDates: { required: true, type: ["string"] },
-    secretTour: {
-      type: "boolean",
-    },
-    startLocation: {
-      type: "string",
-    },
-    locations: {
-      type: "string",
-    },
-  });
-  next();
-});
+export const validateBeforeCreateTour = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    req.files;
+    req.body = validator(req.body, {
+      name: {
+        required: true,
+        type: "string",
+        maxlength: [
+          40,
+          "A tour name must have less or equal then 40 characters",
+        ],
+        minlength: [
+          10,
+          "A tour name must have more or equal then 10 characters",
+        ],
+      },
+      duration: { required: true, type: "number" },
+      maxGroupSize: {
+        required: true,
+        type: "number",
+      },
+      difficulty: {
+        required: true,
+        type: "string",
+        enum: ["easy", "medium", "difficult"],
+      },
+      price: { required: true, type: "number" },
+      priceDiscount: { type: "number" },
+      summary: { type: "string" },
+      description: { required: true, type: "string" },
+      imageCover: { require: true, type: "string" },
+      images: { type: ["string"] },
+      startDates: { required: true, type: ["string"] },
+      secretTour: {
+        type: "boolean",
+      },
+      startLocation: {
+        type: "string",
+      },
+      locations: {
+        type: "string",
+      },
+    });
+    if (req.body.startLocation) {
+      req.body.startLocation = JSON.parse(req.body.startLocation);
+    }
+    if (req.body.locations) {
+      req.body.locations = JSON.parse(req.body.locations);
+    }
+
+    next();
+  }
+);
 
 export const validateBeforeUpdateTour = catchAsync(async (req, res, next) => {
   validator(req.body, {
@@ -151,6 +171,12 @@ export const validateBeforeUpdateTour = catchAsync(async (req, res, next) => {
       type: "string",
     },
   });
+  if (req.body.startLocation) {
+    req.body.startLocation = JSON.parse(req.body.startLocation);
+  }
+  if (req.body.locations) {
+    req.body.locations = JSON.parse(req.body.locations);
+  }
   next();
 });
 
@@ -163,3 +189,15 @@ export const deleteTour = deleteOne(Tour);
 export const getTourStats = catchAsync(getTourStatsFeat);
 export const getMonthlyPlan = catchAsync(getMonthlyPlanFeat);
 export const getToursWithin = catchAsync(getToursWithinFeat);
+export const getDistances = catchAsync(getDistancesFeat);
+
+export const aliasTopTours = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  req.query.limit = "5";
+  req.query.sort = "-ratingsAverage,price";
+  req.query.fields = "name,price,ratingsAverage,summary,difficulty";
+  next();
+};

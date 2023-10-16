@@ -3,19 +3,6 @@ import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/appError";
 import config from "../config";
 
-// export const globalErrorHandler = (
-//   err: AppError,
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   // console.log(err.statusCode);
-//   res.status(err.statusCode).json({
-//     err,
-//     message: err.message,
-//     stack: err.stack,
-//   });
-// };
 const sendErrorDev = (err: AppError, res: Response) => {
   // console.log(err);
   res.status(err.statusCode).json({
@@ -38,19 +25,19 @@ const handleDuplicateDB = (err: AppError) => {
   return new AppError(message, 400);
 };
 
-const handleValidationErrorDB = (err: AppError) => {
+const handleValidationErrorDB = (err: AppError): AppError => {
   const errors: any = Object.values(err.errors).map((el: any) => el.message);
   const message: string = `invalid input data: ${errors.join(". ")}`;
   return new AppError(message, 400);
 };
 
-const handleJWTError = (err: AppError) =>
+const handleJWTError = (err: AppError): AppError =>
   new AppError("Invalid token. Please log in again!", 401);
 
-const handleJWTExpiredError = (err: AppError) =>
+const handleJWTExpiredError = (err: AppError): AppError =>
   new AppError("Your token has expried! Please log in again.", 401);
 
-const sendErrorProd = (err: AppError, res: Response) => {
+const sendErrorProd = (err: AppError, res: Response): void => {
   // Oerational, trusted error: send message to client
   if (err.isOperational) {
     res.status(err.statusCode).json({

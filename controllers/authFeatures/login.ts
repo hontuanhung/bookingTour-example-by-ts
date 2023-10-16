@@ -37,11 +37,11 @@ export = async (req: Request, res: Response, next: NextFunction) => {
   user.userJWTs.push(token);
   await user.save();
 
-  interface CookieOptions {
+  type CookieOptions = {
     expires: Date;
     httpOnly: boolean;
     secure?: boolean;
-  }
+  };
 
   const cookieOptions: CookieOptions = {
     expires: new Date(

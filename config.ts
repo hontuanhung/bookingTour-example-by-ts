@@ -21,6 +21,9 @@ interface ENV {
   EMAIL_PASSWORD: string | undefined;
   EMAIL_HOST: string | undefined;
   EMAIL_PORT: number | undefined;
+
+  GMAIL_USERNAME: string | undefined;
+  GMAIL_PASSWORD: string | undefined;
 }
 
 interface Config {
@@ -35,6 +38,9 @@ interface Config {
   EMAIL_PASSWORD: string;
   EMAIL_HOST: string;
   EMAIL_PORT: number;
+
+  GMAIL_USERNAME: string;
+  GMAIL_PASSWORD: string;
 }
 
 // Loading process.env as ENV interjace
@@ -58,6 +64,9 @@ const getConfig: ENV = {
   EMAIL_PORT: process.env.EMAIL_PORT
     ? Number(process.env.EMAIL_PORT)
     : undefined,
+
+  GMAIL_USERNAME: process.env.GMAIL_USERNAME,
+  GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,
 };
 
 // Throwing an Error if any field was undefined we don't

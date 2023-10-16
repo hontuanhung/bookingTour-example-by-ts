@@ -15,14 +15,10 @@ import { User } from "../models/userModel";
 import catchAsync from "../utils/catchAsync";
 import AppError from "../utils/appError";
 
-interface CustomRequest extends Request {
-  user?: any;
-}
-
-const removeExpredJWT = cron.schedule(
+const removeExpredJWT: cron.ScheduledTask = cron.schedule(
   "*/5 * * * *",
   async () => {
-    let users = await User.find().select("+userJWTs");
+    let users: any = await User.find().select("+userJWTs");
     let currentDateStamp: number = Math.floor(Date.now() * 0.001);
     for (const el of users) {
       for (const [index, val] of el.userJWTs.entries()) {
@@ -40,6 +36,10 @@ const removeExpredJWT = cron.schedule(
 );
 removeExpredJWT.start();
 
+interface CustomRequest extends Request {
+  user?: any;
+}
+
 export const restrictTo = (...roles: string[]) => {
   return (req: CustomRequest, res: Response, next: NextFunction) => {
     // roles['admin', 'lead-guide']
@@ -54,8 +54,8 @@ export const restrictTo = (...roles: string[]) => {
 
 export const signup = catchAsync(signupFeat);
 export const login = catchAsync(loginFeat);
-export const verifyEmail = catchAsync(verifyEmailFeat);
 export const forgotPassword = catchAsync(forgotPasswordFeat);
+export const verifyEmail = catchAsync(verifyEmailFeat);
 export const resetPassword = catchAsync(resetPasswordFeat);
 export const protect = catchAsync(protectFeat);
 export const updatePassword = catchAsync(updatePasswordFeat);

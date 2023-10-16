@@ -9,17 +9,18 @@ export = async (req: Request, res: Response, next: NextFunction) => {
     email: { required: true, type: "string", isEmail: true },
   });
 
+  // 1) Get user based on POSTed email
   const user: any = await User.findOne({ email: req.body.email });
-
   if (!user) {
     return next(new AppError("There is no user with this email address.", 404));
   }
 
-  const resetToken = user.createEmailToken();
-
+  // 2) Generate the random reset token
+  const resetToken: string = user.createEmailToken();
   await user.save({ validateBeforeSave: false });
 
-  const resetURL = `${req.protocol}://${req.get(
+  // 3) Send it to user's email
+  const resetURL: string = `${req.protocol}://${req.get(
     "host"
   )}/api/v1/users/resetPassword/${resetToken}`;
 

@@ -1,3 +1,4 @@
+import { error } from "console";
 import nodemailer, { Transporter } from "nodemailer";
 import config from "../config";
 
@@ -16,24 +17,13 @@ export default class Email {
   newTransport(): Transporter {
     if (config.NODE_ENV === "production") {
       return nodemailer.createTransport({
-        // Chưa tìm được mail server
-        host: config.EMAIL_HOST,
-        port: config.EMAIL_PORT,
+        service: "Gmail",
         auth: {
-          user: config.EMAIL_USERNAME,
-          pass: config.EMAIL_PASSWORD,
+          user: config.GMAIL_USERNAME,
+          pass: config.GMAIL_PASSWORD,
         },
       });
     }
-
-    const something = {
-      host: config.EMAIL_HOST,
-      port: config.EMAIL_PORT,
-      auth: {
-        user: config.EMAIL_USERNAME,
-        pass: config.EMAIL_PASSWORD,
-      },
-    };
 
     return nodemailer.createTransport({
       host: config.EMAIL_HOST,
@@ -53,17 +43,19 @@ export default class Email {
       text: message,
     };
 
-    await this.newTransport().sendMail(mailOptions);
+    this.newTransport().sendMail(mailOptions);
   }
 
   async sendWelcome(): Promise<any> {
     await this.send(
       `Hello ${this.name}. Please click the link below to verify your email account:\n ${this.url}`,
       "Welcome to the Natours Family!"
-    );
+    ).catch((err) => {
+      throw err;
+    });
   }
 
-  async sendPasswordReset(): Promise<any> {
+  async sendPasswordReset(): Promise<void> {
     await this.send(
       `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${this.url}.\nIf you didn't forget your password, please ignore this email!`,
       "Your password reset token Valid for only 10 minutes)"

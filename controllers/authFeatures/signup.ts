@@ -25,13 +25,14 @@ export = async (req: Request, res: Response, next: NextFunction) => {
     role: req.body.role,
   });
 
-  const token = newUser.createEmailToken();
-  newUser.save();
+  const token: string = newUser.createEmailToken();
 
   const verifyURL: string = `${req.protocol}://${req.get(
     "host"
   )}/api/v1/users/verify/${token}`;
   await new Email(newUser, verifyURL).sendWelcome();
+  // 4c5c7bbf69745f6984676113d9449f38c566935f7c25ac8e25ee52dab77519a5
+  newUser.save();
 
   res.status(201).json({
     status: "success",

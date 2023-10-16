@@ -124,7 +124,7 @@ export const validateBeforeUpdateUser = catchAsync(
       return next(new AppError("This route is not for password updates.", 400));
     }
     validator(req.body, {
-      name: { required: true, type: "string" },
+      name: { type: "string" },
       photo: { type: "string" },
       role: { type: "string", enum: ["user", "guide", "lead-guide", "admin"] },
     });

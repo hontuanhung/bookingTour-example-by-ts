@@ -1,32 +1,15 @@
+import { forgotPassword } from "./../controllers/authController";
 import { NextFunction } from "express";
-import mongoose, { Model, Schema, model } from "mongoose";
+import mongoose, { Model, Schema, Document, model } from "mongoose";
 import slugify from "slugify";
-import validator from "validator";
-import { User } from "./userModel";
 
-interface UserDoc {
-  firstName: string;
-  lastName: string;
-  getFullName(): string;
-}
-
-// interface UserVirtuals {
-//   fullName: string;
-// }
-
-// type UserModel = Model<UserDoc, {}, UserVirtuals>; // <-- add virtuals here...
-
-// const schema = new Schema<UserDoc, UserModel>({ // <-- and here
-//   firstName: String,
-//   lastName: String,
-//   getFullName() => {}
-// });
-
-// schema.virtual<UserDoc>('fullName').get(function() {
-//   return this.my;
-// });
-
-interface ITour {
+type Location = {
+  type: String;
+  default: "Point";
+  emun: ["Point"];
+};
+interface ITour extends Document {
+  start: number;
   name: string;
   slug: string;
   duration: number;
@@ -42,17 +25,19 @@ interface ITour {
   createdAt: Date;
   startDates: Date;
   secretTour: boolean;
-  startLocation: string[];
-  location: string[];
+  startLocation: Location;
+  location: Location[];
+  guides: mongoose.Types.ObjectId[];
 }
 
-interface TourVirtuals {
+interface TourVirtuals extends ITour {
   durationWeeks: number;
+  reviews: any;
 }
 
-// type TourModel = Model<ITour, {}, TourVirtuals>;
+type TourModel = Model<ITour, {}, TourVirtuals>;
 
-const tourSchema = new Schema<ITour, TourVirtuals>(
+const tourSchema = new Schema<ITour>(
   {
     name: {
       type: String,
@@ -69,10 +54,6 @@ const tourSchema = new Schema<ITour, TourVirtuals>(
     },
     difficulty: {
       type: String,
-      enum: {
-        values: ["easy", "medium", "difficult"],
-        message: "Difficulty is either: easy, medium, difficult",
-      },
     },
     ratingsAverage: {
       type: Number,
@@ -90,6 +71,12 @@ const tourSchema = new Schema<ITour, TourVirtuals>(
     },
     priceDiscount: {
       type: Number,
+      validate: {
+        validator: function (this: ITour, val: number) {
+          return val < this.price; // this only points to current doc on NEW document creation
+        },
+        message: "Discount price ({VALUE}) should be below regular price",
+      },
     },
     summary: {
       type: String,
@@ -117,27 +104,30 @@ const tourSchema = new Schema<ITour, TourVirtuals>(
       type: Boolean,
       default: false,
     },
-    // startLocation: {
-    //   type: {
-    //     type: String,
-    //   },
-    //   coordinates: [Number],
-    //   address: String,
-    //   description: String,
-    // },
-    // locations: [
-    //   {
-    //     type: {
-    //       type: String,
-    //       default: "Point",
-    //       emun: ["Point"],
-    //     },
-    //     coordinates: [Number],
-    //     address: String,
-    //     description: String,
-    //     day: Number,
-    //   },
-    // ],
+    startLocation: {
+      type: {
+        type: String,
+        default: "Point",
+        emun: ["Point"],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: "Point",
+          emun: ["Point"],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    guides: [{ type: mongoose.Types.ObjectId, ref: "User" }],
   },
   {
     toJSON: { virtuals: true },
@@ -149,9 +139,9 @@ tourSchema.index({ price: 1, ratingsAverage: -1 });
 tourSchema.index({ slug: 1 });
 tourSchema.index({ startLocation: "2dsphere" });
 
-// tourSchema.virtual("durationWeeks").get(function () {
-//   return this.duration / 7;
-// });
+tourSchema.virtual("durationWeeks").get(function (this: TourVirtuals) {
+  return (this.duration / 7).toFixed(2);
+});
 
 // Virtual populate
 tourSchema.virtual("reviews", {
@@ -165,17 +155,33 @@ tourSchema.pre("save", function (next) {
   next();
 });
 
-// tourSchema.pre('save', async function (next) {
-//   // console.log(this.guides);
-//   const guidesPromises = this.guides.map(async (id:string) => await User.findById(id));
-//   this.guides = await Promise.all(guidesPromises);
-//   next();
-// });
+tourSchema.pre("save", function (next) {
+  console.log("Will save document...");
+  next();
+});
 
-// tourSchema.pre(/^find/, function (next) {
-//   this.find({ secretTour: { $ne: true } }); //this trỏ đến Query object
-//   this.start = Date.now();
-//   next();
-// });
+tourSchema.post("save", function (doc, next) {
+  console.log("Successfully saved");
+  next();
+});
 
-// export const Tour = model<ITour>("Tour", tourSchema);
+tourSchema.pre(/^find/, function (this: TourModel, next) {
+  this.find({ secretTour: { $ne: true } });
+  next();
+});
+
+tourSchema.pre(/^find/, function (this: ITour & TourModel, next) {
+  this.populate({
+    path: "guides",
+    select: "-__v -passwordChangedAt",
+  });
+  next();
+});
+
+// tourSchema.pre('aggregate', function (this,next) {
+//     this._pipeline.unshift({ $match: { secretTour: { $ne: true } } });
+//     console.log(this);
+//     next();
+//   });
+
+export const Tour = model<ITour>("Tour", tourSchema);

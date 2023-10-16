@@ -1,11 +1,9 @@
-import { Request, Response, NextFunction } from "express";
-import { DocumentQuery, Model, Query, Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
 
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-interface IUser extends Model<any> {
+interface IUser extends Document {
   name: string;
   email: string;
   password: string;
@@ -19,6 +17,8 @@ interface IUser extends Model<any> {
   inactiveAccount: boolean;
   active: boolean;
 }
+
+type UserModel = Model<IUser>;
 
 const userSchema = new Schema<IUser>({
   name: {
@@ -58,7 +58,7 @@ const userSchema = new Schema<IUser>({
   },
 });
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next: any): Promise<void> {
   if (!this.isModified("password")) {
     return next();
   }
@@ -68,7 +68,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.pre(/^find/, async function (next: any): Promise<void> {
+userSchema.pre(/^find/, function (this: IUser & UserModel, next) {
   this.find({ active: { $ne: false } });
   next();
 });
@@ -95,7 +95,7 @@ userSchema.methods.createEmailToken = function (): string {
 userSchema.methods.changedPasswordAfter = function (
   tokenExpires: number
 ): boolean {
-  if (Number(this.passwordChangedAt) > tokenExpires) {
+  if (Math.round(Number(this.passwordChangedAt) * 0.001) > tokenExpires) {
     return true;
   }
   return false;

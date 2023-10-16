@@ -13,6 +13,7 @@ import {
   deleteMe,
   deleteUser,
   getAllUser,
+  getMe,
   getUser,
   resizeUserPhoto,
   updateMe,
@@ -33,6 +34,7 @@ userRouter.post("/test", testFunction);
 userRouter.use(protect);
 
 userRouter.patch("/updatePassword", updatePassword);
+userRouter.get("/me", getMe, getUser);
 
 userRouter.patch("/updateMe", uploadUserPhoto, resizeUserPhoto, updateMe);
 userRouter.delete("/deleteMe", deleteMe);
@@ -46,4 +48,4 @@ userRouter
   .patch(validateBeforeUpdateUser, updateUser)
   .delete(deleteUser);
 
-export { userRouter };
+export default userRouter;

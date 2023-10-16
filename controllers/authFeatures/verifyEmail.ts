@@ -15,20 +15,20 @@ export = async (req: CustomRequest, res: Response, next: NextFunction) => {
     .digest("hex");
   const user: any = await User.findOne({
     emailToken: hashedToken,
-    // emailTokenExpires: { $gt: Date.now() },
+    emailTokenExpires: { $gt: Date.now() },
     inactiveAccount: true,
   });
   if (!user) {
     next(new AppError("Token is invalid or has expired", 400));
   }
-  new User({}).save({});
+  // await user.save();
 
   user.inactiveAccount = false;
   user.active = true;
   user.emailToken = undefined;
   user.emailTokenExpires = undefined;
-  req.isVerify = true;
-  user.save();
+  // req.isVerify = true;
+  await user.save();
 
   res.status(200).json({
     status: "success",
