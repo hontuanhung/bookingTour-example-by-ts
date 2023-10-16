@@ -4,16 +4,10 @@ import validator from "../../utils/validator";
 import crypto from "crypto";
 import { User } from "../../models/userModel";
 import AppError from "../../utils/appError";
+import { validate } from "../validateController";
 
 export = async (req: Request, res: Response, next: NextFunction) => {
-  validator(req.body, {
-    password: {
-      required: true,
-      type: "string",
-      minlength: [8, "Your password must be at least 8 characters long"],
-    },
-    passwordConfirm: { required: true, type: "string" },
-  });
+  validate("resetPassword", req.body, next);
 
   // 1) Get user based on the token
   const hashedToken: string = crypto

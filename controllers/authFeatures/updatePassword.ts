@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { User } from "../../models/userModel";
 import validator from "../../utils/validator";
 import AppError from "../../utils/appError";
+import { validate } from "../validateController";
 
 interface CustomRequest extends Request {
   user?: any;
@@ -13,15 +14,7 @@ export = async (req: CustomRequest, res: Response, next: NextFunction) => {
     password: req.body.newPassword,
     passwordConfirm: req.body.newPasswordConfirm,
   };
-  validator(body, {
-    currentPassword: { required: true, type: "string" },
-    password: {
-      required: true,
-      type: "string",
-      minlength: [8, "Your password must be at least 8 characters long."],
-    },
-    passwordConfirm: { required: true, type: "string" },
-  });
+  validate("updatePassword", body, next);
 
   // 1) Check if POSTed current password is correct
   const user: any = await User.findById(req.user.id).select("+password");

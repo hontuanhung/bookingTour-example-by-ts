@@ -1,6 +1,7 @@
 import { error } from "console";
 import nodemailer, { Transporter } from "nodemailer";
 import config from "../config";
+import { throws } from "assert";
 
 export default class Email {
   to: string | undefined;
@@ -43,7 +44,7 @@ export default class Email {
       text: message,
     };
 
-    this.newTransport().sendMail(mailOptions);
+    await this.newTransport().sendMail(mailOptions);
   }
 
   async sendWelcome(): Promise<any> {

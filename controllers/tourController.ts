@@ -13,12 +13,12 @@ import {
 import { Tour } from "../models/tourModel";
 import AppError from "../utils/appError";
 import catchAsync from "../utils/catchAsync";
-import validator from "../utils/validator";
 
 import getTourStatsFeat from "./tourFeatues/getTourStats";
 import getMonthlyPlanFeat from "./tourFeatues/getMonthlyPlan";
 import getToursWithinFeat from "./tourFeatues/getToursWithin";
 import getDistancesFeat from "./tourFeatues/getDistances";
+import { validate } from "./validateController";
 
 const multerStorage = multer.memoryStorage();
 
@@ -87,52 +87,12 @@ export const resizeTourImages = async (
 
 export const validateBeforeCreateTour = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    req.files;
-    req.body = validator(req.body, {
-      name: {
-        required: true,
-        type: "string",
-        maxlength: [
-          40,
-          "A tour name must have less or equal then 40 characters",
-        ],
-        minlength: [
-          10,
-          "A tour name must have more or equal then 10 characters",
-        ],
-      },
-      duration: { required: true, type: "number" },
-      maxGroupSize: {
-        required: true,
-        type: "number",
-      },
-      difficulty: {
-        required: true,
-        type: "string",
-        enum: ["easy", "medium", "difficult"],
-      },
-      price: { required: true, type: "number" },
-      priceDiscount: { type: "number" },
-      summary: { type: "string" },
-      description: { required: true, type: "string" },
-      imageCover: { require: true, type: "string" },
-      images: { type: ["string"] },
-      startDates: { required: true, type: ["string"] },
-      secretTour: {
-        type: "boolean",
-      },
-      startLocation: {
-        type: "string",
-      },
-      locations: {
-        type: "string",
-      },
-    });
+    validate("createTour", req.body, next);
     if (req.body.startLocation) {
       req.body.startLocation = JSON.parse(req.body.startLocation);
     }
     if (req.body.locations) {
-      req.body.locations = JSON.parse(req.body.locations);
+      req.body.locations = req.body.locations.map((el: any) => JSON.parse(el));
     }
 
     next();
@@ -140,42 +100,13 @@ export const validateBeforeCreateTour = catchAsync(
 );
 
 export const validateBeforeUpdateTour = catchAsync(async (req, res, next) => {
-  validator(req.body, {
-    name: {
-      type: "string",
-      maxlength: [40, "A tour name must have less or equal then 40 characters"],
-      minlength: [10, "A tour name must have more or euqal then 10 characters"],
-    },
-    duration: { type: "number" },
-    maxGroupSize: {
-      type: "number",
-    },
-    difficulty: {
-      type: "string",
-      enum: ["easy", "medium", "difficult"],
-    },
-    price: { type: "number" },
-    priceDiscount: { type: "number" },
-    summary: { type: "string" },
-    description: { type: "string" },
-    imageCover: { type: "string" },
-    images: { type: ["string"] },
-    startDates: {},
-    secretTour: {
-      type: "boolean",
-    },
-    startLocation: {
-      type: "string",
-    },
-    locations: {
-      type: "string",
-    },
-  });
+  validate("updateTour", req.body, next);
+
   if (req.body.startLocation) {
     req.body.startLocation = JSON.parse(req.body.startLocation);
   }
   if (req.body.locations) {
-    req.body.locations = JSON.parse(req.body.locations);
+    req.body.locations = req.body.locations.map((el: any) => JSON.parse(el));
   }
   next();
 });

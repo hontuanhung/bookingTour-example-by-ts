@@ -10,6 +10,7 @@ import {
   getOne,
   updateOne,
 } from "./handlerFactory";
+import { validate } from "./validateController";
 
 interface CustomRequest extends Request {
   user?: any;
@@ -27,10 +28,7 @@ export const setTourUserIds = (
 
 export const validateBeforeReview = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    validator(req.body, {
-      review: { required: true, type: "string" },
-      rating: { type: "number", min: 1, max: 5 },
-    });
+    validate("review", req.body, next);
     next();
   }
 );

@@ -1,13 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import validator from "../../utils/validator";
 import Email from "../../utils/email";
 import AppError from "../../utils/appError";
 import { User } from "../../models/userModel";
+import { validate } from "../validateController";
 
 export = async (req: Request, res: Response, next: NextFunction) => {
-  validator(req.body, {
-    email: { required: true, type: "string", isEmail: true },
-  });
+  validate("forgotPassword", req.body, next);
 
   // 1) Get user based on POSTed email
   const user: any = await User.findOne({ email: req.body.email });

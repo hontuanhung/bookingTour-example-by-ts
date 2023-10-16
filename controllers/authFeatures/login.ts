@@ -3,9 +3,11 @@ import { Request, Response, NextFunction } from "express";
 import validator from "../../utils/validator";
 import { User } from "../../models/userModel";
 import AppError from "../../utils/appError";
+// import { ValidationError, validate, validateOrReject } from "class-validator";
 
 import jwt from "jsonwebtoken";
 import config from "../../config";
+import { validate } from "../validateController";
 
 function signToken(id: string): string {
   return jwt.sign({ id: id }, config.JWT_SECRET, {
@@ -14,14 +16,7 @@ function signToken(id: string): string {
 }
 
 export = async (req: Request, res: Response, next: NextFunction) => {
-  validator(req.body, {
-    email: { required: true, type: "string", isEmail: true },
-    password: {
-      required: true,
-      type: "string",
-      minlength: [8, "Your password must be at least 8 characters long."],
-    },
-  });
+  validate("login", req.body, next);
 
   const { email, password } = req.body;
 

@@ -24,11 +24,13 @@ const userSchema = new Schema<IUser>({
   name: {
     type: String,
     trim: true,
+    require: true,
   },
   email: {
     type: String,
     trim: true,
     lowercase: true,
+    require: true,
   },
   photo: {
     type: String,
@@ -41,6 +43,7 @@ const userSchema = new Schema<IUser>({
   password: {
     type: String,
     select: false,
+    require: true,
   },
   userJWTs: { type: [String], select: false },
   passwordChangedAt: Date,

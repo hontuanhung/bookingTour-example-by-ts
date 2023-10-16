@@ -8,6 +8,7 @@ import { deleteOne, getAll, getOne, updateOne } from "./handlerFactory";
 import catchAsync from "../utils/catchAsync";
 import AppError from "../utils/appError";
 import validator from "../utils/validator";
+import { validate } from "./validateController";
 
 interface CustomRequest extends Request {
   user?: any;
@@ -80,10 +81,7 @@ export const updateMe = catchAsync(
       );
     }
 
-    validator(req.body, {
-      name: { type: "string" },
-      photo: { type: "string" },
-    });
+    validate("updateMe", req.body, next);
     // 2) Filtered out unwanted fields names that are not allowed to be updated
     const filteredBody: any = filterObj(req.body, "name", "email");
     if (req.file) filteredBody.photo = req.file.filename;
@@ -123,11 +121,7 @@ export const validateBeforeUpdateUser = catchAsync(
     if (req.body.password || req.body.passwordConfirm) {
       return next(new AppError("This route is not for password updates.", 400));
     }
-    validator(req.body, {
-      name: { type: "string" },
-      photo: { type: "string" },
-      role: { type: "string", enum: ["user", "guide", "lead-guide", "admin"] },
-    });
+    validate("updateUser", req.body, next);
     next();
   }
 );
